@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, url_for, flash
+from flask import Flask, request, redirect, url_for
 from pytube import YouTube
 import os
 import re
@@ -6,8 +6,12 @@ import re
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Replace with a strong secret key
 
-# Function to remove the 'my-downloads' directory if it exists
+
 def remove_downloads_dir():
+    """
+     Function to remove the 'my-downloads' directory if it exists.
+    :return: Deletes the folder contents in preparation for new downloads
+    """
     downloads_dir = os.path.join(os.getcwd(), 'my-downloads')
     if os.path.exists(downloads_dir):
         for root, dirs, files in os.walk(downloads_dir, topdown=False):
@@ -17,8 +21,14 @@ def remove_downloads_dir():
                 os.rmdir(os.path.join(root, dir))
         os.rmdir(downloads_dir)
 
-# Function to handle the download process
-def download_video(youtube_url, download_type):
+
+def download_file(youtube_url, download_type):
+    """
+    Function to handle the download process
+    :param youtube_url: YouTube link for what needs to be downloaded
+    :param download_type: file format needed. audio or video
+    :return: the downloaded file format requested
+    """
     try:
         yt = YouTube(youtube_url)
         if download_type == 'video':
@@ -28,7 +38,7 @@ def download_video(youtube_url, download_type):
             stream = yt.streams.filter(only_audio=True).first()
             file_extension = 'mp3'  # You can specify the desired audio file extension here
         else:
-            flash('Invalid download type', 'error')
+            print('Invalid download type', 'error')
             return redirect(url_for('index'))
 
         video_title = re.sub(r'[\/:*?"<>|]', '', yt.title)
@@ -40,14 +50,19 @@ def download_video(youtube_url, download_type):
         filepath = os.path.join(downloads_dir, filename)
         stream.download(output_path=downloads_dir, filename=filename)
 
-        flash('Download completed successfully!', 'success')
+        print('You download should be ready, check the my-downloads folder')
     except Exception as e:
         print(e)
-        flash(f'Error: {str(e)}', 'error')
+        print(f'Error: {str(e)}', 'error')
+
 
 # Route to handle the main functionality
 @app.route('/you-fetch', methods=['GET', 'POST'])
 def index():
+    """
+    Main runner
+    :return: Your Flask application is running
+    """
     if request.method == 'POST':
         remove_downloads_dir()  # Remove the existing 'my-downloads' directory
 
@@ -56,12 +71,13 @@ def index():
         download_type = data.get('download_type')
 
         if not youtube_url:
-            flash('Please enter a YouTube URL', 'error')
+            print('Please enter a YouTube URL', 'error')
             return redirect(url_for('index'))
 
-        download_video(youtube_url, download_type)
+        download_file(youtube_url, download_type)
 
     return "Your Flask application is running."
+
 
 if __name__ == '__main__':
     app.run(debug=True)
