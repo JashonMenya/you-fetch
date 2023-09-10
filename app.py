@@ -24,16 +24,18 @@ def index():
             yt = YouTube(youtube_url)
             if download_type == 'video':
                 stream = yt.streams.get_highest_resolution()
+                file_extension = stream.mime_type.split('/')[-1]
             elif download_type == 'audio':
                 stream = yt.streams.filter(only_audio=True).first()
+                file_extension = 'mp3'  # You can specify the desired audio file extension here
             else:
                 flash('Invalid download type', 'error')
                 return redirect(url_for('index'))
 
             # Sanitize the title for use as a filename
             video_title = re.sub(r'[\/:*?"<>|]', '', yt.title)
-            file_extension = stream.mime_type.split('/')[-1]
             filename = f"{video_title}.{file_extension}"
+            print(filename)
 
             # Create a 'my-downloads' folder within your project directory
             downloads_dir = os.path.join(os.getcwd(), 'my-downloads')
@@ -41,9 +43,9 @@ def index():
 
             # Update the filepath to point to the 'my-downloads' folder
             filepath = os.path.join(downloads_dir, filename)
-            stream.download(output_path=downloads_dir, filename=video_title)
+            stream.download(output_path=downloads_dir, filename=filename)
 
-            flash('Download completed successfully!', 'success')
+            print('Download completed successfully!', 'success')
             return redirect(url_for('index'))
 
         except Exception as e:
